@@ -1,11 +1,9 @@
 package com.example.schoolmanagement.service;
 
-import com.example.schoolmanagement.exception.ResourceNotFoundException;
-import com.example.schoolmanagement.model.Address;
+import com.example.schoolmanagement.Api.ApiException;
+import com.example.schoolmanagement.DTO.TeacherDTO;
 import com.example.schoolmanagement.model.Teacher;
-import com.example.schoolmanagement.repository.AddressRepository;
 import com.example.schoolmanagement.repository.TeacherRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,90 +12,49 @@ import java.util.List;
 public class TeacherService {
 
     private final TeacherRepository teacherRepository;
-    private final AddressRepository addressRepository;
 
-    @Autowired
-    public TeacherService(TeacherRepository teacherRepository, AddressRepository addressRepository) {
+    public TeacherService(TeacherRepository teacherRepository) {
         this.teacherRepository = teacherRepository;
-        this.addressRepository = addressRepository;
     }
 
-    // 1. Get all teachers
     public List<Teacher> getAllTeachers() {
+
         return teacherRepository.findAll();
     }
 
-    // 2. Add new teacher
-    public Teacher addTeacher(Teacher teacher) {
-        return teacherRepository.save(teacher);
-    }
+    public Teacher addTeacher(TeacherDTO teacherDTO) {
 
-    // 3. Update teacher (personal info only)
-    public Teacher updateTeacher(Integer id, Teacher teacherDetails) {
-        Teacher teacher = teacherRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + id));
+        Teacher teacher = new Teacher();
 
-        teacher.setName(teacherDetails.getName());
-        teacher.setAge(teacherDetails.getAge());
-        teacher.setEmail(teacherDetails.getEmail());
-        teacher.setSalary(teacherDetails.getSalary());
+        teacher.setName(teacherDTO.getName());
+        teacher.setAge(teacherDTO.getAge());
+        teacher.setEmail(teacherDTO.getEmail());
+        teacher.setSalary(teacherDTO.getSalary());
 
         return teacherRepository.save(teacher);
     }
 
-    // 4. Delete teacher
-    public void deleteTeacher(Integer id) {
-        Teacher teacher = teacherRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + id));
+    public Teacher updateTeacher(Integer id, TeacherDTO teacherDTO) throws ApiException {
+
+        Teacher teacher = teacherRepository.findById(id).orElseThrow(() -> new ApiException("Teacher not found"));
+
+        teacher.setName(teacherDTO.getName());
+        teacher.setAge(teacherDTO.getAge());
+        teacher.setEmail(teacherDTO.getEmail());
+        teacher.setSalary(teacherDTO.getSalary());
+
+        return teacherRepository.save(teacher);
+    }
+
+    public void deleteTeacher(Integer id) throws ApiException {
+
+        Teacher teacher = teacherRepository.findById(id).orElseThrow(() -> new ApiException("Teacher not found"));
+
         teacherRepository.delete(teacher);
     }
 
-    // 5. Add teacher address
-    public Teacher addTeacherAddress(Integer teacherId, Address address) {
-        Teacher teacher = teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + teacherId));
+    public Teacher getTeacherById(Integer id) throws ApiException {
 
-        if (teacher.getAddress() != null) {
-            throw new RuntimeException("Teacher already has an address. Use update instead.");
-        }
-
-        teacher.setAddress(address);
-        return teacherRepository.save(teacher);
-    }
-
-    // 6. Update teacher address
-    public Teacher updateTeacherAddress(Integer teacherId, Address addressDetails) {
-        Teacher teacher = teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + teacherId));
-
-        Address address = teacher.getAddress();
-        if (address == null) {
-            throw new ResourceNotFoundException("Teacher does not have an address to update");
-        }
-
-        address.setArea(addressDetails.getArea());
-        address.setStreet(addressDetails.getStreet());
-        address.setBuildingNumber(addressDetails.getBuildingNumber());
-
-        return teacherRepository.save(teacher);
-    }
-
-    // 7. Delete teacher address
-    public Teacher deleteTeacherAddress(Integer teacherId) {
-        Teacher teacher = teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + teacherId));
-
-        if (teacher.getAddress() == null) {
-            throw new ResourceNotFoundException("Teacher does not have an address to delete");
-        }
-
-        teacher.setAddress(null);
-        return teacherRepository.save(teacher);
-    }
-
-    // 8. Get teacher details by id
-    public Teacher getTeacherById(Integer id) {
-        return teacherRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + id));
+        return teacherRepository.findById(id).orElseThrow(() -> new ApiException("Teacher not found"));
     }
 }
